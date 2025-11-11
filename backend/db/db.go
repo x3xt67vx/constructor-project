@@ -7,13 +7,12 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func Connect(dsn string) *sql.DB {
-	db, err := sql.Open("postgres", dsn)
+var DB *sql.DB
+
+func Init() {
+	var err error
+	DB, err = sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/constructor")
 	if err != nil {
-		log.Fatal("db open:", err)
+		log.Fatal(err)
 	}
-	if err := db.Ping(); err != nil {
-		log.Fatal("db ping:", err)
-	}
-	return db
 }
