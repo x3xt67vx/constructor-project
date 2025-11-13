@@ -1,26 +1,26 @@
+import {TEMPLATES} from "./templates";
+
 let selectedComponent = null;
 const canvas = document.getElementById("canvas");
 
+// Загрузка макета
 async function loadLayout() {
     const res = await fetch("/api/layouts/1");
     const layout = await res.json();
-    const canvas = document.getElementById("canvas");
 
-    layout.components.forEach(comp => addComponentToCanvas(comp, canvas));
-
-    if (comp.style.background_image) {
-        div.style.backgroundImage = `url(${comp.style.background_image})`;
-        div.style.backgroundSize = "cover";
-        div.style.backgroundPosition = "center";
+    if (layout.components) {
+        layout.components.forEach(comp => addComponentToCanvas(comp, canvas));
     }
 
     if (layout.canvas_background) {
         canvas.style.backgroundImage = `url(${layout.canvas_background})`;
         canvas.style.backgroundSize = "cover";
         canvas.style.backgroundPosition = "center";
+        document.getElementById("canvas-bg-url").value = layout.canvas_background;
     }
 }
 
+// Добавление компонента на canvas
 function addComponentToCanvas(comp, canvas) {
     const div = document.createElement("div");
     div.classList.add("component");
@@ -48,20 +48,23 @@ function addComponentToCanvas(comp, canvas) {
         img.style.height = "100%";
         img.style.objectFit = "cover";
         div.appendChild(img);
-    } else {
+    } else if (comp.type === "link") {
+        const a = document.createElement("a");
+        a.href = comp.content.url || "#";
+        a.target = "_blank";
+        a.innerText = comp.content.text || "Ссылка";
+        div.appendChild(a);
+    }  else {
         div.innerText = comp.content.text || "";
     }
-
 
     makeDraggable(div);
     canvas.appendChild(div);
 
     div.addEventListener("click", () => selectComponent(div));
-
-
 }
 
-
+// Выбор компонента
 function selectComponent(el) {
     if (selectedComponent) selectedComponent.style.border = "1px solid #ccc";
     selectedComponent = el;
@@ -69,7 +72,7 @@ function selectComponent(el) {
     updateStyleEditor(el);
 }
 
-
+// Обновление панели стилей для выбранного блока
 function updateStyleEditor(el) {
     document.getElementById("edit-text").value = el.innerText || "";
     document.getElementById("edit-bg").value = rgbToHex(el.style.backgroundColor || "#ffffff");
@@ -78,17 +81,16 @@ function updateStyleEditor(el) {
     document.getElementById("edit-width").value = parseInt(el.style.width) || 100;
     document.getElementById("edit-height").value = parseInt(el.style.height) || 50;
     document.getElementById("edit-image").value = el.dataset.type === "image" && el.querySelector("img") ? el.querySelector("img").src : "";
-    document.getElementById("edit-bg-image").value = el.style.backgroundImage ? el.style.backgroundImage.slice(5, -2) : "";
+    document.getElementById("edit-bg-image").value = el.style.backgroundImage ? el.style.backgroundImage.replace(/^url\(["']?/, '').replace(/["']?\)$/, '') : "";
 }
 
-
-
-document.getElementById("edit-text").addEventListener("input", e => {if (selectedComponent) selectedComponent.innerText = e.target.value;});
-document.getElementById("edit-bg").addEventListener("input", e => {if (selectedComponent) selectedComponent.style.backgroundColor = e.target.value;});
-document.getElementById("edit-color").addEventListener("input", e => {if (selectedComponent) selectedComponent.style.color = e.target.value;});
-document.getElementById("edit-font").addEventListener("input", e => {if (selectedComponent) selectedComponent.style.fontSize = e.target.value + "px";});
-document.getElementById("edit-width").addEventListener("input", e => {if (selectedComponent) selectedComponent.style.width = e.target.value + "px";});
-document.getElementById("edit-height").addEventListener("input", e => {if (selectedComponent) selectedComponent.style.height = e.target.value + "px";});
+// Динамическое редактирование выбранного блока
+document.getElementById("edit-text").addEventListener("input", e => { if (selectedComponent) selectedComponent.innerText = e.target.value; });
+document.getElementById("edit-bg").addEventListener("input", e => { if (selectedComponent) selectedComponent.style.backgroundColor = e.target.value; });
+document.getElementById("edit-color").addEventListener("input", e => { if (selectedComponent) selectedComponent.style.color = e.target.value; });
+document.getElementById("edit-font").addEventListener("input", e => { if (selectedComponent) selectedComponent.style.fontSize = e.target.value + "px"; });
+document.getElementById("edit-width").addEventListener("input", e => { if (selectedComponent) selectedComponent.style.width = e.target.value + "px"; });
+document.getElementById("edit-height").addEventListener("input", e => { if (selectedComponent) selectedComponent.style.height = e.target.value + "px"; });
 document.getElementById("edit-image").addEventListener("input", e => {
     if (selectedComponent && selectedComponent.dataset.type === "image") {
         let img = selectedComponent.querySelector("img");
@@ -102,18 +104,6 @@ document.getElementById("edit-image").addEventListener("input", e => {
         img.src = e.target.value;
     }
 });
-
-document.getElementById("canvas-bg-url").addEventListener("input", e => {
-    canvas.style.backgroundImage = `url(${e.target.value})`;
-    canvas.style.backgroundSize = "cover";
-    canvas.style.backgroundPosition = "center";
-});
-
-document.getElementById("clear-canvas-bg").addEventListener("click", () => {
-    canvas.style.backgroundImage = "";
-    document.getElementById("canvas-bg-url").value = "";
-});
-
 document.getElementById("edit-bg-image").addEventListener("input", e => {
     if (selectedComponent) {
         selectedComponent.style.backgroundImage = `url(${e.target.value})`;
@@ -122,107 +112,99 @@ document.getElementById("edit-bg-image").addEventListener("input", e => {
     }
 });
 
+// Панель фоновых картинок
+document.getElementById("canvas-bg-url").addEventListener("input", e => {
+    canvas.style.backgroundImage = `url(${e.target.value})`;
+    canvas.style.backgroundSize = "cover";
+    canvas.style.backgroundPosition = "center";
+});
+document.getElementById("clear-canvas-bg").addEventListener("click", () => {
+    canvas.style.backgroundImage = "";
+    document.getElementById("canvas-bg-url").value = "";
+});
 document.getElementById("clear-bg-image").addEventListener("click", () => {
     if (selectedComponent) {
         selectedComponent.style.backgroundImage = "";
         document.getElementById("edit-bg-image").value = "";
     }
 });
+
+// Удаление блока
 document.getElementById("delete-block").addEventListener("click", () => {
     if (selectedComponent) {
         selectedComponent.remove();
         selectedComponent = null;
         // очистка панели стилей
-        document.getElementById("edit-text").value = "";
-        document.getElementById("edit-bg").value = "#ffffff";
-        document.getElementById("edit-color").value = "#000000";
-        document.getElementById("edit-font").value = 14;
-        document.getElementById("edit-width").value = 100;
-        document.getElementById("edit-height").value = 50;
-        document.getElementById("edit-image").value = "";
-        document.getElementById("edit-bg-image").value = "";
+        updateStyleEditorValuesToDefaults();
+    }
+});
+document.addEventListener("keydown", (e) => {
+    if ((e.key === "Delete" || e.key === "Backspace") && selectedComponent) {
+        selectedComponent.remove();
+        selectedComponent = null;
+
+        updateStyleEditorValuesToDefaults();
     }
 });
 
 
-// drag & drop для панели
+function updateStyleEditorValuesToDefaults() {
+    document.getElementById("edit-text").value = "";
+    document.getElementById("edit-bg").value = "#ffffff";
+    document.getElementById("edit-color").value = "#000000";
+    document.getElementById("edit-font").value = 14;
+    document.getElementById("edit-width").value = 100;
+    document.getElementById("edit-height").value = 50;
+    document.getElementById("edit-image").value = "";
+    document.getElementById("edit-bg-image").value = "";
+}
+
+// Добавление блоков (текст/изображение/профиль)
 document.querySelectorAll(".template-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-        const canvas = document.getElementById("canvas");
-        const type = btn.getAttribute("data-type");
-        const comp = {
-            id: Date.now(),
-            type: type,
-            position: { x: 50, y: 50 },
-            size: { width: 200, height: 50 },
-            z_index: 1,
-            content: { text: type.toUpperCase() },
-            style: { background_color: "#fff", color: "#000", font_size: "16px" }
-        };
-        addComponentToCanvas(comp, canvas);
-    });
-});
-document.querySelectorAll(".template-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-        const canvas = document.getElementById("canvas");
-        const type = btn.getAttribute("data-type");
-        const comp = {
-            id: Date.now(),
-            type: type,
-            position: { x: 50, y: 50 },
-            size: { width: 200, height: 150 },
-            z_index: 1,
-            content: type === "image" ? { image_url: "https://via.placeholder.com/200x150" } : { text: type.toUpperCase() },
-            style: { background_color: "#fff", color: "#000", font_size: "16px" }
-        };
-        addComponentToCanvas(comp, canvas);
-    });
-});
-document.querySelectorAll(".template-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-        const canvas = document.getElementById("canvas");
-        const type = btn.getAttribute("data-type");
-        const comp = {
-            id: Date.now(),
-            type: type,
-            position: { x: 50, y: 50 },
-            size: { width: 200, height: 150 },
-            z_index: 1,
-            content: type === "image" ? { image_url: "https://via.placeholder.com/200x150" } : { text: type.toUpperCase() },
-            style: { background_color: "#fff", color: "#000", font_size: "16px" }
-        };
-        addComponentToCanvas(comp, canvas);
+        const type = btn.dataset.type;
+
+        if (TEMPLATES[type]) {
+            addTemplate(type); // вставка шаблона
+        } else {
+            // обычный блок
+            const comp = {
+                id: Date.now(),
+                type: type,
+                position: { x: 50, y: 50 },
+                size: { width: 200, height: type === "image" ? 150 : 50 },
+                z_index: 1,
+                content: type === "image" ? { image_url: "https://via.placeholder.com/200x150" } : { text: type.toUpperCase() },
+                style: { background_color: "#fff", color: "#000", font_size: "16px", background_image: "" }
+            };
+            addComponentToCanvas(comp, canvas);
+        }
     });
 });
 
 
-
+// Drag & Drop
 function makeDraggable(el) {
     let isDragging = false, offsetX, offsetY;
-
-    el.addEventListener('mousedown', (e) => {
+    el.addEventListener('mousedown', e => {
         isDragging = true;
         offsetX = e.offsetX;
         offsetY = e.offsetY;
     });
-
-    document.addEventListener('mousemove', (e) => {
+    document.addEventListener('mousemove', e => {
         if (!isDragging) return;
         el.style.left = (e.pageX - offsetX) + 'px';
         el.style.top = (e.pageY - offsetY) + 'px';
     });
-
-    document.addEventListener('mouseup', () => {
-        isDragging = false;
-    });
+    document.addEventListener('mouseup', () => { isDragging = false; });
 }
+
+// Сохранение макета
 document.getElementById("save-layout").addEventListener("click", saveLayout);
 
 function saveLayout() {
-    const canvas = document.getElementById("canvas");
     const comps = [];
-
-    canvas.querySelectorAll(".component").forEach((el, index) => {
+    canvas.querySelectorAll(".component").forEach(el => {
         let content = {};
         if (el.dataset.type === "image") {
             const img = el.querySelector("img");
@@ -232,23 +214,17 @@ function saveLayout() {
         }
 
         comps.push({
-            id: el.dataset.id || Date.now() + index,
-            type: el.dataset.type || "text",
-            position: {
-                x: parseInt(el.style.left),
-                y: parseInt(el.style.top)
-            },
-            size: {
-                width: el.offsetWidth,
-                height: el.offsetHeight
-            },
+            id: el.dataset.id,
+            type: el.dataset.type,
+            position: { x: parseInt(el.style.left), y: parseInt(el.style.top) },
+            size: { width: el.offsetWidth, height: el.offsetHeight },
             z_index: parseInt(el.style.zIndex) || 1,
             content: content,
             style: {
-                background_color: document.getElementById("edit-bg").value || "#fff",
-                color: document.getElementById("edit-color").value || "#000",
-                font_size: document.getElementById("edit-font").value + "px" || "16px",
-                background_image: document.getElementById("edit-bg-image").value || ""
+                background_color: el.style.backgroundColor || "#fff",
+                color: el.style.color || "#000",
+                font_size: el.style.fontSize || "16px",
+                background_image: el.style.backgroundImage ? el.style.backgroundImage.replace(/^url\(["']?/, '').replace(/["']?\)$/, '') : ""
             }
         });
     });
@@ -273,60 +249,27 @@ function saveLayout() {
         .catch(err => alert("Ошибка: " + err));
 }
 
+function getBackgroundImageUrl(el) {
+    const bg = el.style.backgroundImage;
+    if (!bg || bg === "none") return "";
+    const match = bg.match(/url\(["']?(.*?)["']?\)/);
+    return match ? match[1] : "";
+}
 
 function rgbToHex(rgb) {
     const result = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(rgb);
     return result ? "#" + ((1 << 24) + (parseInt(result[1]) << 16) + (parseInt(result[2]) << 8) + parseInt(result[3])).toString(16).slice(1) : rgb;
 }
-function getBackgroundImageUrl(el) {
-    const bg = el.style.backgroundImage;
-    if (!bg || bg === "none") return "";
-    // убираем url("...") или url('...')
-    const match = bg.match(/url\(["']?(.*?)["']?\)/);
-    return match ? match[1] : "";
-}
-function removeBlock() {
-    if (!selected) {
-        alert("Выберите блок для удаления");
-        return;
-    }
-    selected.remove();
-    selected = null;
-}
-function removeBlockBackground() {
-    if (!selected) {
-        alert("Сначала выберите блок");
-        return;
-    }
-    selected.style.backgroundImage = "";
-    document.getElementById("edit-bg-image").value = "";
-}
-function removeCanvasBackground() {
-    const canvas = document.getElementById("canvas");
-    canvas.style.backgroundImage = "";
-    document.getElementById("canvas-bg-url").value = "";
-}
-document.addEventListener("keydown", (e) => {
-    if (e.key === "Delete" || e.key === "Backspace") {
-        if (selectedBlockId) {
-            deleteSelectedBlock();
-        }
-    }
-});
+function addTemplate(templateName) {
+    const template = TEMPLATES[templateName];
+    if (!template) return;
 
-function deleteSelectedBlock() {
-    const blockEl = document.querySelector(`[data-id="${selectedBlockId}"]`);
-    if (!blockEl) return;
-
-    blockEl.remove(); // удаляем с экрана
-
-    // обновляем локальный массив блоков
-    blocks = blocks.filter(b => b.id !== selectedBlockId);
-
-    selectedBlockId = null;
-    updateBlockStyleEditor(null);
-
-    saveLayout();
+    template.components.forEach(comp => {
+        const newComp = JSON.parse(JSON.stringify(comp));
+        newComp.id = Date.now() + Math.floor(Math.random() * 1000); // уникальный id
+        addComponentToCanvas(newComp, canvas);
+    });
 }
+
 
 loadLayout();

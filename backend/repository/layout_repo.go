@@ -9,7 +9,7 @@ import (
 func GetLayoutByID(id int) ([]byte, error) {
 	row := db.DB.QueryRow("SELECT layout FROM user_layouts WHERE id=$1", id)
 	var layoutJSON []byte
-	err := row.Scan(&layoutJSON)
+	var err = row.Scan(&layoutJSON)
 	if err != nil {
 		return nil, err
 	}

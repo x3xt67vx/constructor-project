@@ -22,10 +22,6 @@
         <button class="template-btn" data-type="profile">Профиль</button>
         <hr>
         <button id="delete-block">Удалить выбранный блок</button>
-        <button onclick="removeBlock()">Удалить блок</button>
-        <button onclick="removeBlockBackground()">Удалить фон блока</button>
-        <button onclick="removeCanvasBackground()">Удалить фон полотна</button>
-
         <h3>Свойства выбранного блока</h3>
         <div id="style-editor">
             <label>URL картинки: <input type="text" id="edit-image"></label><br><br>
@@ -48,7 +44,7 @@
 
 
 </div>
-<div id="canvas"></div>
+<script type="module" src="/static/js/templates.js"></script>
 <script type="module" src="/static/js/app.js"></script>
 </body>
 </html>

@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS user_layouts (
     updated_at TIMESTAMP DEFAULT now()
     );
 
--- initial row
 INSERT INTO user_layouts (id, name, layout)
 VALUES (1, 'First Layout', '{"id":1,"name":"First Layout","components":[],"canvas_background":""}'::jsonb)
     ON CONFLICT (id) DO NOTHING;
