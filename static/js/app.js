@@ -1,4 +1,46 @@
-import {TEMPLATES} from "./templates";
+const TEMPLATES = {
+    profile: {
+        components: [
+            {
+                id: Date.now() + 1,
+                type: "image",
+                position: { x: 50, y: 20 },
+                size: { width: 100, height: 100 },
+                z_index: 1,
+                content: { image_url: "https://via.placeholder.com/100" },
+                style: { background_color: "#fff", color: "#000", font_size: "14px", background_image: "" }
+            },
+            {
+                id: Date.now() + 2,
+                type: "text",
+                position: { x: 160, y: 30 },
+                size: { width: 200, height: 30 },
+                z_index: 1,
+                content: { text: "Имя Фамилия" },
+                style: { background_color: "#fff", color: "#333", font_size: "18px", background_image: "" }
+            },
+            {
+                id: Date.now() + 3,
+                type: "text",
+                position: { x: 160, y: 70 },
+                size: { width: 200, height: 25 },
+                z_index: 1,
+                content: { text: "Должность" },
+                style: { background_color: "#fff", color: "#666", font_size: "14px", background_image: "" }
+            },
+            {
+                id: Date.now() + 4,
+                type: "text",
+                position: { x: 160, y: 100 },
+                size: { width: 200, height: 25 },
+                z_index: 1,
+                content: { text: "GitHub: https://github.com/username" },
+                style: { background_color: "#fff", color: "#1a0dab", font_size: "14px", background_image: "" }
+            }
+        ]
+    }
+};
+
 
 let selectedComponent = null;
 const canvas = document.getElementById("canvas");
@@ -159,7 +201,6 @@ function updateStyleEditorValuesToDefaults() {
     document.getElementById("edit-bg-image").value = "";
 }
 
-// Добавление блоков (текст/изображение/профиль)
 document.querySelectorAll(".template-btn").forEach(btn => {
     btn.addEventListener("click", () => {
         const type = btn.dataset.type;
@@ -174,7 +215,7 @@ document.querySelectorAll(".template-btn").forEach(btn => {
                 position: { x: 50, y: 50 },
                 size: { width: 200, height: type === "image" ? 150 : 50 },
                 z_index: 1,
-                content: type === "image" ? { image_url: "https://via.placeholder.com/200x150" } : { text: type.toUpperCase() },
+                content: type === "image" ? { image_url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5ThUgDFctLmsjTh0g8F0lDaj82zhpOrk_Tw&s" } : { text: type.toUpperCase() },
                 style: { background_color: "#fff", color: "#000", font_size: "16px", background_image: "" }
             };
             addComponentToCanvas(comp, canvas);
