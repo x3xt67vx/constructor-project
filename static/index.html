@@ -16,6 +16,10 @@
 <div style="display: flex; height: 100vh;">
     <div id="canvas" style="flex: 1; position: relative; background: #fafafa;"></div>
     <div id="sidebar" style="width: 250px; background: #eaeaea; padding: 10px; box-sizing: border-box;">
+        <hr>
+        <h3>Шаблоны</h3>
+        <button id="choose-template-btn">Выбрать шаблон</button>
+
         <h3>Компоненты</h3>
         <button class="template-btn" data-type="text">Текст</button>
         <button class="template-btn" data-type="image">Изображение</button>
@@ -40,11 +44,19 @@
         <button id="clear-canvas-bg">Удалить фон</button>
         <hr>
         <button id="save-layout">Сохранить макет</button>
+        <div id="template-selector"
+             style="display:none; padding:10px; background:#fff; border:1px solid #ccc; position:absolute; right:260px; top:20px; z-index:999;">
+            <h4>Выберите шаблон:</h4>
+            <button class="select-template" data-tpl="profile">Профиль</button><br><br>
+            <button class="select-template" data-tpl="devcard">Dev Card</button><br><br>
+            <button class="select-template" data-tpl="business">Business</button><br><br>
+            <button id="close-template-selector">Закрыть</button>
+        </div>
+
     </div>
 
 
 </div>
-<script src="/static/js/templates.js"></script>
 <script src="/static/js/app.js"></script>
 
 </body>
