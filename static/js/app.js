@@ -230,6 +230,11 @@ TEMPLATES.business = {
 
 
 let selectedComponent = null;
+let lastDeletedComponent = null;
+
+let maxZIndex = 1;
+
+
 const canvas = document.getElementById("canvas");
 
 async function loadLayout() {
@@ -516,6 +521,25 @@ function addTemplate(templateName) {
         addComponentToCanvas(newComp, canvas);
     });
 }
+
+function deleteSelectedComponent() {
+    if (!selectedComponent) return;
+
+    selectedComponent.style.border = "1px solid transparent";
+    selectedComponent.remove();
+    selectedComponent = null;
+    updateStyleEditorValuesToDefaults();
+}
+
+
+document.getElementById("delete-block").addEventListener("click", deleteSelectedComponent);
+
+document.addEventListener("keydown", (e) => {
+    if ((e.key === "Delete" || e.key === "Backspace") && selectedComponent) {
+        deleteSelectedComponent();
+    }
+});
+
 
 
 loadLayout();
