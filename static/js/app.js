@@ -1,3 +1,5 @@
+const DEFAULT_IMG = "/static/images/default_img.jpg";
+
 const TEMPLATES = {
     profile: {
         components: [
@@ -7,7 +9,7 @@ const TEMPLATES = {
                 position: { x: 50, y: 20 },
                 size: { width: 100, height: 100 },
                 z_index: 1,
-                content: { image_url: "https://via.placeholder.com/100" },
+                content: { image_url: "https://i.pinimg.com/736x/f2/07/0c/f2070ca40e6b6106386849db1044c9d0.jpg" },
                 style: { background_color: "#fff", color: "#000", font_size: "14px", background_image: "" }
             },
             {
@@ -230,45 +232,113 @@ TEMPLATES.business = {
 
 
 let selectedComponent = null;
-let lastDeletedComponent = null;
-
 let maxZIndex = 1;
+let dragSrcEl = null;
 
 
 const canvas = document.getElementById("canvas");
 
-async function loadLayout() {
-    const res = await fetch("/api/layouts/1");
-    const layout = await res.json();
+const layersList = document.getElementById("layers-list");
+const btnLayerUp = document.getElementById("layer-up");
+const btnLayerDown = document.getElementById("layer-down");
+const btnLayerTop = document.getElementById("layer-top");
+const btnLayerBottom = document.getElementById("layer-bottom");
 
-    if (layout.components) {
-        layout.components.forEach(comp => addComponentToCanvas(comp, canvas));
-    }
 
-    if (layout.canvas_background) {
-        canvas.style.backgroundImage = `url(${layout.canvas_background})`;
-        canvas.style.backgroundSize = "cover";
-        canvas.style.backgroundPosition = "center";
-        document.getElementById("canvas-bg-url").value = layout.canvas_background;
+
+const CONTROLS = {
+    editImage: document.getElementById("edit-image"),
+    editBgImage: document.getElementById("edit-bg-image"),
+    clearBgImageBtn: document.getElementById("clear-bg-image"),
+    editText: document.getElementById("edit-text"),
+    editBg: document.getElementById("edit-bg"),
+    editColor: document.getElementById("edit-color"),
+    editFont: document.getElementById("edit-font"),
+    editWidth: document.getElementById("edit-width"),
+    editHeight: document.getElementById("edit-height"),
+    borderRadius: document.getElementById("border-radius-text")
+};
+
+function hideControl(el) {
+    if (!el) return;
+    if (el.parentElement && el.parentElement.tagName === "LABEL") el.parentElement.style.display = "none";
+    else el.style.display = "none";
+}
+function showControl(el) {
+    if (!el) return;
+    if (el.parentElement && el.parentElement.tagName === "LABEL") el.parentElement.style.display = "";
+    else el.style.display = "";
+}
+
+function hideAllControls() {
+    Object.values(CONTROLS).forEach(c => { if (c) hideControl(c); });
+    if (CONTROLS.clearBgImageBtn) CONTROLS.clearBgImageBtn.style.display = "none";
+}
+
+function showControlsFor(type) {
+    hideAllControls();
+    if (type === "text") {
+        showControl(CONTROLS.editText);
+        showControl(CONTROLS.editBg);
+        showControl(CONTROLS.editColor);
+        showControl(CONTROLS.editFont);
+        showControl(CONTROLS.editWidth);
+        showControl(CONTROLS.editHeight);
+        showControl(CONTROLS.borderRadius);
+    } else if (type === "image") {
+        showControl(CONTROLS.editImage);
+        showControl(CONTROLS.editWidth);
+        showControl(CONTROLS.editHeight);
+        showControl(CONTROLS.borderRadius);
+    } else {
+        showControl(CONTROLS.editBg);
+        showControl(CONTROLS.editWidth);
+        showControl(CONTROLS.editHeight);
+        showControl(CONTROLS.borderRadius);
     }
 }
 
-// Добавление компонента на canvas
-function addComponentToCanvas(comp, canvas) {
+
+async function loadLayout() {
+    try {
+        const res = await fetch("/api/layouts/1");
+        if (!res.ok) throw new Error("no layout");
+        const layout = await res.json();
+
+        if (layout.components) {
+            layout.components.forEach(comp => addComponentToCanvas(comp, canvas));
+        }
+
+        if (layout.canvas_background) {
+            canvas.style.backgroundImage = `url(${layout.canvas_background})`;
+            canvas.style.backgroundSize = "cover";
+            canvas.style.backgroundPosition = "center";
+            document.getElementById("canvas-bg-url").value = layout.canvas_background;
+        }
+    } catch (e) {
+        console.log("loadLayout:", e.message);
+    }
+}
+
+function addComponentToCanvas(comp, canvasEl) {
     const div = document.createElement("div");
     div.classList.add("component");
     div.dataset.id = comp.id;
     div.dataset.type = comp.type;
-    div.style.left = comp.position.x + "px";
-    div.style.top = comp.position.y + "px";
-    div.style.width = comp.size.width + "px";
-    div.style.height = comp.size.height + "px";
-    div.style.zIndex = comp.z_index;
-    div.style.background = comp.style.background_color || "#fff";
-    div.style.color = comp.style.color || "#000";
-    div.style.fontSize = comp.style.font_size || "14px";
+    div.style.left = (comp.position?.x ?? 50) + "px";
+    div.style.top = (comp.position?.y ?? 50) + "px";
+    div.style.width = (comp.size?.width ?? 100) + "px";
+    div.style.height = (comp.size?.height ?? 50) + "px";
+    div.style.zIndex = comp.z_index ?? (++maxZIndex);
+    div.style.background = comp.style?.background_color || "";
+    div.style.color = comp.style?.color || "";
+    div.style.fontSize = comp.style?.font_size || "";
 
-    if (comp.style.background_image) {
+    if (comp.style && comp.style.border_radius) {
+        div.style.borderRadius = comp.style.border_radius;
+    }
+
+    if (comp.style && comp.style.background_image) {
         div.style.backgroundImage = `url(${comp.style.background_image})`;
         div.style.backgroundSize = "cover";
         div.style.backgroundPosition = "center";
@@ -276,56 +346,120 @@ function addComponentToCanvas(comp, canvas) {
 
     if (comp.type === "image") {
         const img = document.createElement("img");
-        img.src = comp.content.image_url || "";
+        img.src = comp.content?.image_url || DEFAULT_IMG;
         img.style.width = "100%";
         img.style.height = "100%";
         img.style.objectFit = "cover";
+        if (comp.style && comp.style.border_radius) img.style.borderRadius = comp.style.border_radius;
         div.appendChild(img);
     } else if (comp.type === "link") {
         const a = document.createElement("a");
-        a.href = comp.content.url || "#";
+        a.href = comp.content?.url || "#";
         a.target = "_blank";
-        a.innerText = comp.content.text || "Ссылка";
+        a.innerText = comp.content?.text || "Ссылка";
         div.appendChild(a);
-    }  else {
-        div.innerText = comp.content.text || "";
+    } else {
+        div.innerText = comp.content?.text || "";
     }
 
     makeDraggable(div);
-    canvas.appendChild(div);
+    canvasEl.appendChild(div);
 
-    div.addEventListener("click", () => selectComponent(div));
+    div.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        selectComponent(div);
+    });
 }
 
-// Выбор компонента
 function selectComponent(el) {
-    if (selectedComponent) selectedComponent.style.border = "1px solid #ccc";
+    if (!el) return;
+    if (selectedComponent) {
+        selectedComponent.style.border = "1px solid #ccc";
+    }
     selectedComponent = el;
     el.style.border = "2px solid blue";
+
+    const type = el.dataset.type || "other";
+    showControlsFor(type);
+
     updateStyleEditor(el);
 }
 
-// Обновление панели стилей для выбранного блока
+canvas.addEventListener("click", () => {
+    if (selectedComponent) {
+        selectedComponent.style.border = "1px solid #ccc";
+        selectedComponent = null;
+    }
+    hideAllControls();
+});
+
+
 function updateStyleEditor(el) {
-    document.getElementById("edit-text").value = el.innerText || "";
-    document.getElementById("edit-bg").value = rgbToHex(el.style.backgroundColor || "#ffffff");
-    document.getElementById("edit-color").value = rgbToHex(el.style.color || "#000000");
-    document.getElementById("edit-font").value = parseInt(el.style.fontSize) || 14;
-    document.getElementById("edit-width").value = parseInt(el.style.width) || 100;
-    document.getElementById("edit-height").value = parseInt(el.style.height) || 50;
-    document.getElementById("edit-image").value = el.dataset.type === "image" && el.querySelector("img") ? el.querySelector("img").src : "";
-    document.getElementById("edit-bg-image").value = el.style.backgroundImage ? el.style.backgroundImage.replace(/^url\(["']?/, '').replace(/["']?\)$/, '') : "";
+    if (!el) return;
+
+    const editText = document.getElementById("edit-text");
+    editText.value = el.innerText || "";
+
+    document.getElementById("edit-bg").value = rgbToHex(el.style.backgroundColor || window.getComputedStyle(el).backgroundColor || "#ffffff");
+    document.getElementById("edit-color").value = rgbToHex(el.style.color || window.getComputedStyle(el).color || "#000000");
+
+    const fs = el.style.fontSize || window.getComputedStyle(el).fontSize || "14px";
+
+    document.getElementById("edit-font").value = parseInt(fs);
+    document.getElementById("edit-width").value = parseInt(el.style.width) || el.offsetWidth || 100;
+    document.getElementById("edit-height").value = parseInt(el.style.height) || el.offsetHeight || 50;
+
+    if (el.dataset.type === "image") {
+        const img = el.querySelector("img");
+        document.getElementById("edit-image").value = img ? img.src : "";
+    } else {
+        document.getElementById("edit-image").value = "";
+    }
+
+    const bgImg = el.style.backgroundImage ? el.style.backgroundImage.replace(/^url\(["']?/, '').replace(/["']?\)$/, '') : "";
+    document.getElementById("edit-bg-image").value = bgImg;
+
+    let br = "0";
+    if (el.dataset.type === "image") {
+        const img = el.querySelector("img");
+        if (img && img.style.borderRadius) br = parseInt(img.style.borderRadius) || 0;
+        else if (el.style.borderRadius) br = parseInt(el.style.borderRadius) || 0;
+    } else {
+        br = parseInt(el.style.borderRadius) || 0;
+    }
+    document.getElementById("border-radius-text").value = br;
 }
 
-// Динамическое редактирование выбранного блока
-document.getElementById("edit-text").addEventListener("input", e => { if (selectedComponent) selectedComponent.innerText = e.target.value; });
-document.getElementById("edit-bg").addEventListener("input", e => { if (selectedComponent) selectedComponent.style.backgroundColor = e.target.value; });
-document.getElementById("edit-color").addEventListener("input", e => { if (selectedComponent) selectedComponent.style.color = e.target.value; });
-document.getElementById("edit-font").addEventListener("input", e => { if (selectedComponent) selectedComponent.style.fontSize = e.target.value + "px"; });
-document.getElementById("edit-width").addEventListener("input", e => { if (selectedComponent) selectedComponent.style.width = e.target.value + "px"; });
-document.getElementById("edit-height").addEventListener("input", e => { if (selectedComponent) selectedComponent.style.height = e.target.value + "px"; });
+
+// Text
+document.getElementById("edit-text").addEventListener("input", e => {
+    if (selectedComponent && selectedComponent.dataset.type !== "image") selectedComponent.innerText = e.target.value;});
+
+document.getElementById("edit-bg").addEventListener("input", e => {
+    if (!selectedComponent) return;
+    selectedComponent.style.backgroundColor = e.target.value;});
+
+document.getElementById("edit-color").addEventListener("input", e => {
+    if (!selectedComponent) return;
+    selectedComponent.style.color = e.target.value;});
+
+document.getElementById("edit-font").addEventListener("input", e => {
+    if (!selectedComponent) return;
+    selectedComponent.style.fontSize = e.target.value + "px";});
+
+document.getElementById("edit-width").addEventListener("input", e => {
+    if (!selectedComponent) return;
+    selectedComponent.style.width = e.target.value + "px";});
+
+document.getElementById("edit-height").addEventListener("input", e => {
+    if (!selectedComponent) return;
+    selectedComponent.style.height = e.target.value + "px";});
+
+
+//Image
 document.getElementById("edit-image").addEventListener("input", e => {
-    if (selectedComponent && selectedComponent.dataset.type === "image") {
+    if (!selectedComponent) return;
+    if (selectedComponent.dataset.type === "image") {
         let img = selectedComponent.querySelector("img");
         if (!img) {
             img = document.createElement("img");
@@ -334,20 +468,40 @@ document.getElementById("edit-image").addEventListener("input", e => {
             img.style.objectFit = "cover";
             selectedComponent.appendChild(img);
         }
-        img.src = e.target.value;
+        img.src = e.target.value || DEFAULT_IMG;
     }
 });
 document.getElementById("edit-bg-image").addEventListener("input", e => {
-    if (selectedComponent) {
+    if (!selectedComponent) return;
+    if (!e.target.value) {
+        selectedComponent.style.backgroundImage = "";
+    } else {
         selectedComponent.style.backgroundImage = `url(${e.target.value})`;
         selectedComponent.style.backgroundSize = "cover";
         selectedComponent.style.backgroundPosition = "center";
     }
 });
+document.getElementById("clear-bg-image").addEventListener("click", () => {
+    if (!selectedComponent) return;
+    selectedComponent.style.backgroundImage = "";
+    document.getElementById("edit-bg-image").value = "";
+});
 
-// Панель фоновых картинок
+document.getElementById("border-radius-text").addEventListener("input", e => {
+    if (!selectedComponent) return;
+    const val = e.target.value + "px";
+    if (selectedComponent.dataset.type === "image") {
+        const img = selectedComponent.querySelector("img");
+        if (img) img.style.borderRadius = val;
+        else selectedComponent.style.borderRadius = val;
+    } else {
+        selectedComponent.style.borderRadius = val;
+    }
+});
+
+//Canvas
 document.getElementById("canvas-bg-url").addEventListener("input", e => {
-    canvas.style.backgroundImage = `url(${e.target.value})`;
+    canvas.style.backgroundImage = e.target.value ? `url(${e.target.value})` : "";
     canvas.style.backgroundSize = "cover";
     canvas.style.backgroundPosition = "center";
 });
@@ -355,50 +509,57 @@ document.getElementById("clear-canvas-bg").addEventListener("click", () => {
     canvas.style.backgroundImage = "";
     document.getElementById("canvas-bg-url").value = "";
 });
-document.getElementById("clear-bg-image").addEventListener("click", () => {
-    if (selectedComponent) {
-        selectedComponent.style.backgroundImage = "";
-        document.getElementById("edit-bg-image").value = "";
+
+function deleteSelectedComponent() {
+    if (!selectedComponent) return;
+    // remove
+    selectedComponent.remove();
+    selectedComponent = null;
+    updateStyleEditorValuesToDefaults();
+    hideAllControls();
+}
+document.getElementById("delete-block").addEventListener("click", deleteSelectedComponent);
+
+document.addEventListener("keydown", (e) => {
+    if ((e.key === "Delete" || e.key === "Backspace") && selectedComponent) {
+        deleteSelectedComponent();
     }
 });
 
-// Удаление блока
-document.getElementById("delete-block").addEventListener("click", () => {
-    if (selectedComponent) {
-        selectedComponent.remove();
-        selectedComponent = null;
-        // очистка панели стилей
-        updateStyleEditorValuesToDefaults();
-    }
-});
-// Открыть меню шаблонов
+//Template
 document.getElementById("choose-template-btn").addEventListener("click", () => {
     document.getElementById("template-selector").style.display = "block";
 });
-
-// Закрыть меню
 document.getElementById("close-template-selector").addEventListener("click", () => {
     document.getElementById("template-selector").style.display = "none";
 });
-
-// Выбор шаблона
 document.querySelectorAll(".select-template").forEach(btn => {
     btn.addEventListener("click", () => {
-        const tpl = btn.dataset.tpl;
-        addTemplate(tpl);
+        addTemplate(btn.dataset.tpl);
         document.getElementById("template-selector").style.display = "none";
     });
 });
 
-document.addEventListener("keydown", (e) => {
-    if ((e.key === "Delete" || e.key === "Backspace") && selectedComponent) {
-        selectedComponent.remove();
-        selectedComponent = null;
 
-        updateStyleEditorValuesToDefaults();
-    }
+document.querySelectorAll(".template-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const type = btn.dataset.type;
+        if (TEMPLATES[type]) {
+            addTemplate(type);
+        } else {
+            const comp = {
+                id: Date.now(),
+                type: type,
+                position: { x: 50, y: 50 },
+                size: { width: 200, height: type === "image" ? 150 : 50 },
+                z_index: ++maxZIndex,
+                content: type === "image" ? { image_url: DEFAULT_IMG } : { text: type.toUpperCase() },
+                style: { background_color: "#fff", color: "#000", font_size: "16px", background_image: "", border_radius: "0px" }
+            };
+            addComponentToCanvas(comp, canvas);
+        }
+    });
 });
-
 
 function updateStyleEditorValuesToDefaults() {
     document.getElementById("edit-text").value = "";
@@ -411,33 +572,12 @@ function updateStyleEditorValuesToDefaults() {
     document.getElementById("edit-bg-image").value = "";
 }
 
-document.querySelectorAll(".template-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-        const type = btn.dataset.type;
-
-        if (TEMPLATES[type]) {
-            addTemplate(type); // вставка шаблона
-        } else {
-            // обычный блок
-            const comp = {
-                id: Date.now(),
-                type: type,
-                position: { x: 50, y: 50 },
-                size: { width: 200, height: type === "image" ? 150 : 50 },
-                z_index: 1,
-                content: type === "image" ? { image_url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5ThUgDFctLmsjTh0g8F0lDaj82zhpOrk_Tw&s" } : { text: type.toUpperCase() },
-                style: { background_color: "#fff", color: "#000", font_size: "16px", background_image: "" }
-            };
-            addComponentToCanvas(comp, canvas);
-        }
-    });
-});
-
 
 // Drag & Drop
 function makeDraggable(el) {
-    let isDragging = false, offsetX, offsetY;
+    let isDragging = false, offsetX = 0, offsetY = 0;
     el.addEventListener('mousedown', e => {
+        if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.tagName === "BUTTON") return;
         isDragging = true;
         offsetX = e.offsetX;
         offsetY = e.offsetY;
@@ -450,7 +590,8 @@ function makeDraggable(el) {
     document.addEventListener('mouseup', () => { isDragging = false; });
 }
 
-// Сохранение макета
+document.getElementById("save-layout").addEventListener("click", saveLayout);
+
 document.getElementById("save-layout").addEventListener("click", saveLayout);
 
 function saveLayout() {
@@ -464,18 +605,33 @@ function saveLayout() {
             content.text = el.innerText;
         }
 
+        let br = "";
+        if (el.dataset.type === "image") {
+            const img = el.querySelector("img");
+            br = img && img.style.borderRadius ? img.style.borderRadius : el.style.borderRadius || "";
+        } else {
+            br = el.style.borderRadius || "";
+        }
+
         comps.push({
-            id: el.dataset.id,
-            type: el.dataset.type,
-            position: { x: parseInt(el.style.left), y: parseInt(el.style.top) },
-            size: { width: el.offsetWidth, height: el.offsetHeight },
+            id: el.dataset.id || Date.now(),
+            type: el.dataset.type || "text",
+            position: {
+                x: parseInt(el.style.left) || 0,
+                y: parseInt(el.style.top) || 0
+            },
+            size: {
+                width: el.offsetWidth,
+                height: el.offsetHeight
+            },
             z_index: parseInt(el.style.zIndex) || 1,
             content: content,
             style: {
-                background_color: el.style.backgroundColor || "#fff",
-                color: el.style.color || "#000",
-                font_size: el.style.fontSize || "16px",
-                background_image: el.style.backgroundImage ? el.style.backgroundImage.replace(/^url\(["']?/, '').replace(/["']?\)$/, '') : ""
+                background_color: el.style.backgroundColor || "",
+                color: el.style.color || "",
+                font_size: el.style.fontSize || "",
+                background_image: el.style.backgroundImage ? el.style.backgroundImage.replace(/^url\(["']?/, '').replace(/["']?\)$/, '') : "",
+                border_radius: br
             }
         });
     });
@@ -500,46 +656,178 @@ function saveLayout() {
         .catch(err => alert("Ошибка: " + err));
 }
 
+//utilities
 function getBackgroundImageUrl(el) {
     const bg = el.style.backgroundImage;
     if (!bg || bg === "none") return "";
     const match = bg.match(/url\(["']?(.*?)["']?\)/);
     return match ? match[1] : "";
 }
-
 function rgbToHex(rgb) {
+    if (!rgb) return "#000000";
     const result = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(rgb);
     return result ? "#" + ((1 << 24) + (parseInt(result[1]) << 16) + (parseInt(result[2]) << 8) + parseInt(result[3])).toString(16).slice(1) : rgb;
 }
+
+
+
 function addTemplate(templateName) {
     const template = TEMPLATES[templateName];
     if (!template) return;
 
     template.components.forEach(comp => {
         const newComp = JSON.parse(JSON.stringify(comp));
-        newComp.id = Date.now() + Math.floor(Math.random() * 1000); // уникальный id
+        newComp.id = Date.now() + Math.floor(Math.random() * 1000); // unique id
+        if (!newComp.style) newComp.style = {};
+        if (!newComp.style.border_radius) newComp.style.border_radius = "0px";
         addComponentToCanvas(newComp, canvas);
     });
 }
 
-function deleteSelectedComponent() {
+function refreshLayersPanel() {
+    if (!layersList) return;
+
+    layersList.innerHTML = "";
+
+    const blocks = Array.from(document.querySelectorAll(".component"))
+        .sort((a, b) => (parseInt(a.style.zIndex || 0) - parseInt(b.style.zIndex || 0)));
+
+    blocks.forEach(block => {
+        const li = document.createElement("li");
+        const name = block.dataset.type || "block";
+
+        li.textContent = `${name} (z: ${block.style.zIndex || 0})`;
+        li.dataset.id = block.dataset.id;
+        li.draggable = true;
+
+        if (selectedComponent && selectedComponent.dataset.id === block.dataset.id) {
+            li.classList.add("active");
+        }
+
+        li.addEventListener("click", () => {
+            selectComponent(block);
+            refreshLayersPanel();
+        });
+
+        layersList.appendChild(li);
+    });
+}
+function shiftLayer(direction) {
     if (!selectedComponent) return;
 
-    selectedComponent.style.border = "1px solid transparent";
-    selectedComponent.remove();
-    selectedComponent = null;
-    updateStyleEditorValuesToDefaults();
+    const z = parseInt(selectedComponent.style.zIndex || 0);
+    selectedComponent.style.zIndex = z + direction;
+
+    refreshLayersPanel();
 }
 
 
-document.getElementById("delete-block").addEventListener("click", deleteSelectedComponent);
+btnLayerUp.addEventListener("click", () => shiftLayer(+1));
+btnLayerDown.addEventListener("click", () => shiftLayer(-1));
 
-document.addEventListener("keydown", (e) => {
-    if ((e.key === "Delete" || e.key === "Backspace") && selectedComponent) {
-        deleteSelectedComponent();
+btnLayerTop.addEventListener("click", () => {
+    if (!selectedComponent()) return;
+
+    const maxZ = Math.max(
+        ...Array.from(document.querySelectorAll(".component")).map(x => parseInt(x.style.zIndex || 0))
+    );
+
+    selectedComponent().style.zIndex = maxZ + 1;
+
+    refreshLayersPanel();
+});
+
+btnLayerBottom.addEventListener("click", () => {
+    if (!selectedComponent()) return;
+
+    const minZ = Math.min(
+        ...Array.from(document.querySelectorAll(".component")).map(x => parseInt(x.style.zIndex || 0))
+    );
+
+    selectedComponent.style.zIndex = minZ - 1;
+
+    refreshLayersPanel();
+});
+setInterval(refreshLayersPanel, 500);
+
+
+layersList.addEventListener("dragstart", (e) => {
+    if (e.target.tagName !== "LI") return;
+
+    dragSrcEl = e.target;
+    e.target.classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move";
+});
+
+layersList.addEventListener("dragend", (e) => {
+    if (e.target.tagName !== "LI") return;
+
+    e.target.classList.remove("dragging");
+    refreshLayersPanel();
+});
+
+layersList.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    const afterElement = getDragAfterElement(layersList, e.clientY);
+
+    const dragging = layersList.querySelector(".dragging");
+
+    if (!afterElement) {
+        layersList.appendChild(dragging);
+    } else {
+        layersList.insertBefore(dragging, afterElement);
     }
 });
 
+layersList.addEventListener("dragenter", (e) => {
+    if (e.target.tagName === "LI") {
+        e.target.classList.add("drag-over");
+    }
+});
+
+layersList.addEventListener("dragleave", (e) => {
+    if (e.target.tagName === "LI") {
+        e.target.classList.remove("drag-over");
+    }
+});
+
+layersList.addEventListener("drop", (e) => {
+    e.preventDefault();
+
+    Array.from(layersList.querySelectorAll("li")).forEach(li =>
+        li.classList.remove("drag-over")
+    );
+
+    applyNewZIndexes();
+});
+
+function getDragAfterElement(container, y) {
+    const items = [...container.querySelectorAll("li:not(.dragging)")];
+
+    return items.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+
+        if (offset < 0 && offset > closest.offset) {
+            return { offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
 
 
+
+function applyNewZIndexes() {
+    const items = Array.from(layersList.querySelectorAll("li"));
+
+    items.forEach((li, index) => {
+        const id = li.dataset.id;
+        const block = document.querySelector(`.component[data-id="${id}"]`);
+        block.style.zIndex = index;
+    });
+
+    refreshLayersPanel();
+}
 loadLayout();
+hideAllControls();

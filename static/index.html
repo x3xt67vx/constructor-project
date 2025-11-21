@@ -1,63 +1,112 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Конструктор визитки</title>
-    <style>
-        body { margin: 0; font-family: sans-serif; }
-        #canvas { position: relative; width: 100vw; height: 100vh; background: #fafafa; }
-        .component { position: absolute; padding: 5px; border: 1px solid #ccc; cursor: move; }
-        .block.selected {
-            outline: 2px dashed #4a90e2;
-        }
-    </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Конструктор визитки — Редактор</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-<div style="display: flex; height: 100vh;">
-    <div id="canvas" style="flex: 1; position: relative; background: #fafafa;"></div>
-    <div id="sidebar" style="width: 250px; background: #eaeaea; padding: 10px; box-sizing: border-box;">
-        <hr>
-        <h3>Шаблоны</h3>
-        <button id="choose-template-btn">Выбрать шаблон</button>
-
-        <h3>Компоненты</h3>
-        <button class="template-btn" data-type="text">Текст</button>
-        <button class="template-btn" data-type="image">Изображение</button>
-        <button class="template-btn" data-type="profile">Профиль</button>
-        <hr>
-        <button id="delete-block">Удалить выбранный блок</button>
-        <h3>Свойства выбранного блока</h3>
-        <div id="style-editor">
-            <label>URL картинки: <input type="text" id="edit-image"></label><br><br>
-            <label>Фоновое изображение: <input type="text" id="edit-bg-image"></label><br><br>
-            <button id="clear-bg-image">Удалить фон блока</button><br><br>
-            <label>Текст: <input type="text" id="edit-text"></label><br><br>
-            <label>Фон: <input type="color" id="edit-bg"></label><br><br>
-            <label>Цвет: <input type="color" id="edit-color"></label><br><br>
-            <label>Размер шрифта: <input type="number" id="edit-font" min="8" max="72"></label><br><br>
-            <label>Ширина: <input type="number" id="edit-width" min="10" max="1000"></label><br><br>
-            <label>Высота: <input type="number" id="edit-height" min="10" max="1000"></label><br><br>
-        </div>
-        <hr>
-        <h3>Фон полотна</h3>
-        <label>URL фона: <input type="text" id="canvas-bg-url"></label><br><br>
-        <button id="clear-canvas-bg">Удалить фон</button>
-        <hr>
-        <button id="save-layout">Сохранить макет</button>
-        <div id="template-selector"
-             style="display:none; padding:10px; background:#fff; border:1px solid #ccc; position:absolute; right:260px; top:20px; z-index:999;">
-            <h4>Выберите шаблон:</h4>
-            <button class="select-template" data-tpl="profile">Профиль</button><br><br>
-            <button class="select-template" data-tpl="devcard">Dev Card</button><br><br>
-            <button class="select-template" data-tpl="business">Business</button><br><br>
-            <button id="close-template-selector">Закрыть</button>
-        </div>
-
+<header id="topbar">
+    <div class="top-left">
+        <button id="choose-template-btn" class="btn">Выбрать шаблон</button>
+        <button class="template-btn btn" data-type="text">Добавить текст</button>
+        <button class="template-btn btn" data-type="image">Добавить изображение</button>
+        <button class="template-btn btn" data-type="profile">Добавить профиль</button>
     </div>
 
+    <div class="top-right">
+        <label class="inline-label">Фон полотна:
+            <input id="canvas-bg-url" type="text" placeholder="URL фона" />
+        </label>
+        <button id="clear-canvas-bg" class="btn">Очистить фон</button>
+        <button id="save-layout" class="btn primary">Сохранить макет</button>
+    </div>
+</header>
 
+<div id="main">
+    <aside id="sidebar">
+        <h3>Свойства выбранного блока</h3>
+
+        <label>Текст:
+            <input type="text" id="edit-text" placeholder="Текст блока">
+        </label>
+
+        <label>Фон:
+            <input type="color" id="edit-bg" value="#ffffff">
+        </label>
+
+        <label>Цвет текста:
+            <input type="color" id="edit-color" value="#000000">
+        </label>
+
+        <label>Размер шрифта:
+            <input type="number" id="edit-font" min="6" max="72" value="14">
+        </label>
+
+        <label>Ширина:
+            <input type="number" id="edit-width" min="10" value="100">
+        </label>
+
+        <label>Высота:
+            <input type="number" id="edit-height" min="10" value="50">
+        </label>
+
+        <label>Скругление (px):
+            <input type="range" id="border-radius-text" min="0" max="200" value="0">
+        </label>
+
+        <hr>
+
+        <label>URL картинки (для image):
+            <input type="text" id="edit-image" placeholder="https://...jpg">
+        </label>
+
+        <label>Фоновая картинка:
+            <input type="text" id="edit-bg-image" placeholder="https://...jpg">
+        </label>
+
+        <button id="clear-bg-image" class="btn">Удалить фон блока</button>
+
+        <hr>
+        <h3>Слои</h3>
+
+        <div id="layers-panel">
+            <ul id="layers-list"></ul>
+
+            <div id="layer-controls">
+                <button id="layer-up" class="btn">Выше</button>
+                <button id="layer-down" class="btn">Ниже</button>
+                <button id="layer-top" class="btn">На верх</button>
+                <button id="layer-bottom" class="btn">На низ</button>
+            </div>
+        </div>
+
+
+        <button id="delete-block" class="btn danger">Удалить выбранный блок</button>
+    </aside>
+
+    <section id="canvas-wrap">
+        <div id="canvas"></div>
+    </section>
 </div>
-<script src="/static/js/app.js"></script>
 
+<!-- Окно выбора шаблонов -->
+<div id="template-selector" class="modal">
+    <div class="modal-box">
+        <button id="close-template-selector" class="close">✕</button>
+        <h3>Выберите шаблон</h3>
+        <div class="tpl-list">
+            <button class="select-template btn" data-tpl="profile">Профиль</button>
+            <button class="select-template btn" data-tpl="skills">Навыки</button>
+            <button class="select-template btn" data-tpl="contacts">Контакты</button>
+            <button class="select-template btn" data-tpl="project">Проект</button>
+            <button class="select-template btn" data-tpl="devcard">Dev Card</button>
+            <button class="select-template btn" data-tpl="business">Бизнес</button>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/app.js"></script>
 </body>
 </html>

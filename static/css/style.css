@@ -1,37 +1,142 @@
 :root{
-    --sidebar-width: 300px;
-    --bg: #f7f7f7;
+    --sidebar-w: 300px;
+    --gap: 12px;
+    --bg: #f3f4f6;
+    --muted: #666;
+    --accent: #2b6cb0;
 }
 
 * { box-sizing: border-box; }
-body, html, .app { height: 100%; margin: 0; font-family: Inter, Roboto, sans-serif; }
+html,body { height:100%; margin:0; font-family: Inter, Roboto, Arial, sans-serif; background:var(--bg); color:#111; }
 
-.app { display: flex; height: 100vh; }
-.canvas {
-    flex: 1;
-    position: relative;
-    background: var(--bg);
-    overflow: auto;
+#topbar {
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:8px 16px;
+    background: #fff;
+    border-bottom:1px solid #e2e8f0;
+    gap: var(--gap);
 }
-.sidebar {
-    width: var(--sidebar-width);
-    background: #eaeaea;
-    padding: 14px;
-    border-left: 1px solid rgba(0,0,0,0.06);
-    overflow-y: auto;
+#topbar .btn { margin-right:8px; }
+.inline-label { display:flex; align-items:center; gap:8px; font-size:13px; }
+
+#main { display:flex; height: calc(100vh - 56px); }
+#sidebar {
+    width: var(--sidebar-w);
+    padding:16px;
+    background: #fff;
+    border-right:1px solid #e2e8f0;
+    overflow:auto;
 }
+#canvas-wrap { flex:1; padding:16px; overflow:auto; display:flex; }
+#canvas {
+    flex:1;
+    border:2px dashed #cbd5e0;
+    background: #ffffff;
+    position:relative;
+    min-height: calc(100vh - 56px - 32px);
+}
+
+#sidebar h3 { margin-top:0; margin-bottom:8px; font-size:16px; }
+#sidebar label { display:block; margin-bottom:10px; font-size:13px; color:var(--muted); }
+#sidebar input[type="text"], #sidebar input[type="number"], #sidebar input[type="color"] {
+    display:block; width:100%; padding:6px 8px; margin-top:6px; border:1px solid #e2e8f0; border-radius:4px;
+}
+
+.btn {
+    display:inline-block;
+    padding:6px 10px;
+    border:1px solid #cbd5e0;
+    background:#fff;
+    cursor:pointer;
+    border-radius:6px;
+    font-size:13px;
+}
+.btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.btn.danger, .danger { background:#ffe6e6; color:#8b1d1d; border-color:#f5c2c2; }
+
+.close { position:absolute; right:8px; top:8px; background:#eee; border-radius:4px; padding:4px 8px; }
+
+.modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); align-items:center; justify-content:center; z-index:999; }
+.modal .modal-box {
+    width:420px; background:#fff; padding:18px; border-radius:8px; position:relative; box-shadow:0 6px 30px rgba(0,0,0,0.12);
+}
+.tpl-list { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+
 .component {
-    position: absolute;
-    padding: 6px;
-    border: 1px solid #cfcfcf;
-    cursor: move;
-    background-color: #fff;
-    user-select: none;
+    position:absolute;
+    border:1px solid #cbd5e0;
+    background:transparent;
+    color: #111;
+    padding:6px;
+    min-width:40px;
+    min-height:20px;
+    user-select:none;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
 }
-.component.selected {
-    outline: 2px dashed #4a90e2;
-}
-.component img { display:block; width:100%; height:100%; object-fit:cover; }
 
-.btns button, .actions button { display:block; width:100%; margin-bottom:8px; padding:8px; }
-.hint { font-size: 12px; color: #444; margin-top: 10px; }
+.component img {
+    display:block;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.component[style*="border: 2px solid blue"], .component.selected {
+    box-shadow: 0 4px 14px rgba(43,108,176,0.12);
+}
+#layers-panel {
+    padding: 10px 0;
+}
+
+#layers-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #fafafa;
+}
+
+#layers-list li {
+    padding: 6px 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 13px;
+    background: white;
+}
+
+#layers-list li:hover {
+    background: #edf2f7;
+}
+
+#layers-list li.active {
+    background: #bee3f8;
+}
+
+#layer-controls {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+#layers-list li.dragging {
+    opacity: 0.4;
+}
+
+#layers-list li.drag-over {
+    border-top: 2px solid #3182ce;
+}
+
+
+@media (max-width:900px){
+    #sidebar { display:none; }
+    #topbar { flex-wrap:wrap; gap:6px; height:auto; padding:10px; }
+}
