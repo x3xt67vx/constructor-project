@@ -4,6 +4,7 @@ import (
 	"constructor-project/backend/db"
 	"encoding/json"
 	"net/http"
+	"strconv"
 )
 
 type LoginRequest struct {
@@ -28,9 +29,18 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if db.CheckUser(creds.Username, creds.Password) {
+	stOk, userID := db.CheckUser(creds.Username, creds.Password)
+	if stOk {
+		http.SetCookie(w, &http.Cookie{
+			Name:     "session",
+			Value:    strconv.Itoa(userID),
+			Path:     "/",
+			HttpOnly: true,
+			MaxAge:   3600 * 24, // 1 день
+		})
+
 		json.NewEncoder(w).Encode(map[string]any{"success": true})
-	} else {
-		json.NewEncoder(w).Encode(map[string]any{"success": false})
+		return
 	}
+
 }

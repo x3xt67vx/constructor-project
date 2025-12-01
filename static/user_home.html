@@ -1,11 +1,428 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Моя страница</title>
+    <meta charset="UTF-8" />
+    <title>Личный кабинет</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root{
+            --bg:#041026;
+            --panel:#0b1220;
+            --sidebar:#1f2430;
+            --muted:#9aa4b2;
+            --text:#e6eef8;
+            --accent:#4A67FF;
+            --accent-2:#06b6d4;
+            --danger:#d9534f;
+            --glass: rgba(255,255,255,0.03);
+            --radius:12px;
+            --gap:18px;
+            --shadow: 0 10px 30px rgba(2,6,23,0.6);
+            --max-width:1200px;
+            --transition:180ms cubic-bezier(.2,.9,.2,1);
+            --sidebar-width:240px;
+            --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+        }
+
+        *,*::before,*::after{box-sizing:border-box}
+        html,body{height:100%;margin:0}
+        body{
+            font-family:var(--font-sans);
+            background: linear-gradient(180deg,#041026 0%, var(--bg) 100%);
+            color:var(--text);
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
+            display:flex;
+            justify-content:center;
+            padding:24px;
+            line-height:1.45;
+        }
+
+        .wrapper{
+            width:100%;
+            max-width:var(--max-width);
+            display:flex;
+            gap:var(--gap);
+            align-items:flex-start;
+        }
+
+        .sidebar{
+            width:var(--sidebar-width);
+            background: linear-gradient(180deg, rgba(255,255,255,0.02), var(--sidebar));
+            border-radius:var(--radius);
+            padding:20px;
+            height:calc(100vh - 48px);
+            box-shadow:var(--shadow);
+            border:1px solid rgba(255,255,255,0.02);
+            display:flex;
+            flex-direction:column;
+            justify-content:flex-start;
+            gap:12px;
+        }
+
+        .profile{
+            display:flex;
+            gap:12px;
+            align-items:center;
+        }
+
+        .avatar{
+            width:56px;
+            height:56px;
+            border-radius:12px;
+            background:linear-gradient(135deg,var(--accent),var(--accent-2));
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:700;
+            color:white;
+            box-shadow:0 8px 22px rgba(74,103,255,0.12);
+            flex-shrink:0;
+            font-size:16px;
+        }
+
+        .user-info h2{
+            margin:0;
+            font-size:1rem;
+            font-weight:700;
+            letter-spacing:-0.02em;
+            white-space:nowrap;
+            text-overflow:ellipsis;
+            overflow:hidden;
+        }
+
+        .user-info .sub{
+            margin-top:4px;
+            color:var(--muted);
+            font-size:0.88rem;
+        }
+
+        .sidebar .actions{
+            margin-top:12px;
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+        }
+
+        .btn{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+            padding:10px 12px;
+            border-radius:10px;
+            text-decoration:none;
+            color:white;
+            font-weight:600;
+            font-size:0.95rem;
+            border:0;
+            cursor:pointer;
+            transition:transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+        }
+
+        .btn-primary{
+            background:linear-gradient(90deg,var(--accent),var(--accent-2));
+            box-shadow:0 10px 30px rgba(74,103,255,0.12);
+        }
+
+        .btn-danger{
+            background:linear-gradient(90deg,var(--danger),#c94a45);
+            box-shadow:0 8px 22px rgba(217,83,79,0.08);
+        }
+
+        .btn-ghost{
+            background:transparent;
+            border:1px solid rgba(255,255,255,0.04);
+            color:var(--text);
+            padding:8px 10px;
+            border-radius:8px;
+            font-weight:600;
+        }
+
+        .btn:active{transform:translateY(1px)}
+        .btn:focus{outline:3px solid rgba(74,103,255,0.12); outline-offset:3px}
+
+        .content{
+            flex:1;
+            background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+            border-radius:var(--radius);
+            padding:28px;
+            min-height:calc(100vh - 48px);
+            box-shadow:var(--shadow);
+            border:1px solid rgba(255,255,255,0.02);
+            display:flex;
+            flex-direction:column;
+            gap:18px;
+        }
+
+        .content-header{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:12px;
+        }
+
+        .content h1{
+            margin:0;
+            font-size:1.25rem;
+            font-weight:700;
+        }
+
+        .lead{
+            color:var(--muted);
+            font-size:0.95rem;
+        }
+
+        .projects{
+            display:grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap:14px;
+            margin-top:6px;
+        }
+        .project{
+            position: relative;
+            background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.008));
+            border-radius:10px;
+            padding:14px;
+            border:1px solid rgba(255,255,255,0.02);
+            margin-bottom:12px;
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.18);
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background var(--transition), transform var(--transition);
+            z-index: 5;
+        }
+
+
+        .delete-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: scale(1.1);
+        }
+
+
+        .project-card{
+            background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.008));
+            border-radius:10px;
+            padding:14px;
+            border:1px solid rgba(255,255,255,0.02);
+            transition:transform var(--transition), box-shadow var(--transition);
+            min-height:96px;
+            display:flex;
+            flex-direction:column;
+            justify-content:space-between;
+        }
+
+        .project-card:hover{
+            transform:translateY(-8px);
+            box-shadow:0 22px 48px rgba(2,6,23,0.6);
+        }
+
+        .project-title{
+            font-weight:700;
+            margin:0 0 6px 0;
+            font-size:1rem;
+        }
+
+        .project-sub{
+            color:var(--muted);
+            font-size:0.92rem;
+            margin:0;
+        }
+
+        .project-actions{
+            display:flex;
+            gap:8px;
+            justify-content:flex-end;
+            margin-top:8px;
+        }
+
+        .project .open-btn{
+            background:transparent;
+            border:1px solid rgba(255,255,255,0.04);
+            color:var(--text);
+            padding:8px 10px;
+            border-radius:8px;
+            font-weight:600;
+            text-decoration:none;
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+        }
+
+        .project .open-btn:hover{transform:translateY(-2px)}
+
+        .empty{
+            border:1px dashed rgba(255,255,255,0.03);
+            border-radius:10px;
+            padding:28px;
+            text-align:center;
+            color:var(--muted);
+            background:linear-gradient(180deg, rgba(255,255,255,0.005), transparent);
+        }
+
+        #list {
+            display: contents;
+        }
+
+        .project{
+            background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.008));
+            border-radius:10px;
+            padding:14px;
+            border:1px solid rgba(255,255,255,0.02);
+            margin-bottom:12px;
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+        }
+        .project b{display:block;font-weight:700;margin-bottom:4px}
+        .project small{color:var(--muted)}
+        .project button{
+            background:linear-gradient(90deg,var(--accent),var(--accent-2));
+            color:white;
+            border:0;
+            padding:8px 10px;
+            border-radius:8px;
+            cursor:pointer;
+            font-weight:600;
+        }
+
+        @media (max-width:900px){
+            body{padding:12px}
+            .wrapper{flex-direction:column}
+            .sidebar{width:100%; height:auto; order:2}
+            .content{order:1; min-height:auto}
+            .projects{grid-template-columns: repeat(auto-fill, minmax(180px, 1fr))}
+        }
+    </style>
 </head>
 <body>
-<h1>Добро пожаловать!</h1>
-<a href="/constructor">Перейти к конструктору</a>
+<div class="wrapper" role="application" aria-label="Личный кабинет">
+    <aside class="sidebar" aria-labelledby="username">
+        <div class="profile">
+            <div class="avatar" aria-hidden="true">П</div>
+            <div class="user-info">
+                <h2 id="username">Загрузка...</h2>
+                <div class="sub">Добро пожаловать</div>
+            </div>
+        </div>
+
+        <div class="actions" role="navigation" aria-label="Действия">
+            <button class="btn btn-primary" onclick="createLayout()" type="button">Создать макет</button>
+            <a href="/logout" class="btn btn-danger" role="button">Выйти</a>
+        </div>
+    </aside>
+
+    <main class="content" role="main" aria-labelledby="projects-title">
+        <div class="content-header">
+            <div>
+                <h1 id="projects-title">Ваши проекты</h1>
+                <div class="lead">Здесь будут отображаться проекты, созданные вами в конструкторе.</div>
+            </div>
+            <div>
+                <!-- reserved for controls -->
+            </div>
+        </div>
+
+        <section class="projects" aria-live="polite" id="projects-section">
+            <div id="list" style="width:100%; display:block"></div>
+
+        </section>
+    </main>
+</div>
+
+<script>
+    fetch("/api/me")
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("username").innerText =
+                 data.username;
+        });
+
+    async function loadLayouts() {
+        const res = await fetch("/api/layouts/list");
+        const data = await res.json();
+
+        let html = "";
+        for (let layout of data) {
+            html += `
+            <div class="project">
+                <button class="delete-btn" onclick="deleteLayout(${layout.id})">×</button>
+
+                <b>${layout.name}</b>
+                <small>${layout.created_at}</small>
+
+                <br>
+
+                <a href="/constructor?id=${layout.id}">
+                    <button>Открыть</button>
+                </a>
+            </div>
+        `;
+        }
+        document.getElementById("list").innerHTML = html;
+    }
+
+
+    async function createLayout() {
+        const name = prompt("Название макета:");
+        const description = prompt("Описание проекта")
+        if (!name) return;
+
+        const res = await fetch("/api/layouts/create", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({name , description})
+
+
+        });
+
+
+        const data = await res.json();
+
+        if (data.success) {
+            window.location.href = "/constructor?id=" + data.id;
+        }
+    }
+    async function deleteLayout(id) {
+        if (!confirm("Удалить макет?")) return;
+
+        const res = await fetch("/api/layouts/delete", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({id})
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            loadLayouts();
+        } else {
+            alert("Ошибка удаления");
+        }
+    }
+
+
+    loadLayouts();
+</script>
 </body>
 </html>

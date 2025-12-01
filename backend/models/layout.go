@@ -1,32 +1,40 @@
 package handlers
 
 import (
+	"constructor-project/backend/middleware"
 	"constructor-project/backend/repository"
 	"encoding/json"
 	"net/http"
 )
 
 func GetLayoutHandler(w http.ResponseWriter, r *http.Request) {
-	layoutJSON, err := repository.GetLayoutByID(1)
+	userID := r.Context().Value(middleware.UserIDKey).(int)
+
+	layoutJSON, err := repository.GetLayoutByUser(userID)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		http.Error(w, "Layout not found", 404)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(layoutJSON)
 }
 
 func SaveLayoutHandler(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(middleware.UserIDKey).(int)
+
 	var layout map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&layout); err != nil {
 		http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	err := repository.SaveLayout(1, layout)
+
+	err := repository.SaveLayoutForUser(userID, layout)
 	if err != nil {
-		http.Error(w, "Error saving layout: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), 500)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"status":"ok"}`))
 }

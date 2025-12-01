@@ -1,32 +1,42 @@
 package handlers
 
 import (
-	"constructor-project/backend/repository"
+	"constructor-project/backend/db"
+	"constructor-project/backend/middleware"
 	"encoding/json"
 	"net/http"
+	"strconv"
 )
 
 func GetLayoutHandler(w http.ResponseWriter, r *http.Request) {
-	layoutJSON, err := repository.GetLayoutByID(1)
+	userID := r.Context().Value(middleware.UserIDKey).(int)
+
+	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
+
+	content, err := db.GetLayout(userID, id)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		http.Error(w, "not found", 404)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(layoutJSON)
+
+	w.Write([]byte(content))
 }
 
 func SaveLayoutHandler(w http.ResponseWriter, r *http.Request) {
-	var layout map[string]interface{}
-	if err := json.NewDecoder(r.Body).Decode(&layout); err != nil {
-		http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-	err := repository.SaveLayout(1, layout)
+	userID := r.Context().Value(middleware.UserIDKey).(int)
+
+	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
+
+	var body map[string]any
+	json.NewDecoder(r.Body).Decode(&body)
+
+	jsonBytes, _ := json.Marshal(body)
+
+	err := db.SaveLayout(userID, id, string(jsonBytes))
 	if err != nil {
-		http.Error(w, "Error saving layout: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed", 500)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status":"ok"}`))
+
+	w.Write([]byte(`{"success": true}`))
 }

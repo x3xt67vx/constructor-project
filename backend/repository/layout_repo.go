@@ -6,14 +6,10 @@ import (
 	"log"
 )
 
-func GetLayoutByID(id int) ([]byte, error) {
-	row := db.DB.QueryRow("SELECT layout FROM user_layouts WHERE id=$1", id)
+func GetLayoutByUser(userID int) ([]byte, error) {
+	row := db.DB.QueryRow(`SELECT layout FROM user_layouts WHERE user_id=$1`, userID)
 	var layoutJSON []byte
-	var err = row.Scan(&layoutJSON)
-	if err != nil {
-		return nil, err
-	}
-	return layoutJSON, nil
+	return layoutJSON, row.Scan(&layoutJSON)
 }
 
 func SaveLayout(id int, layout interface{}) error {
@@ -25,5 +21,21 @@ func SaveLayout(id int, layout interface{}) error {
 	if err != nil {
 		log.Println("Error saving layout:", err)
 	}
+	return err
+}
+
+func SaveLayoutForUser(userID int, layout interface{}) error {
+	layoutJSON, err := json.Marshal(layout)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.DB.Exec(`
+        INSERT INTO user_layouts (user_id, layout)
+        VALUES ($1, $2)
+        ON CONFLICT (user_id)
+        DO UPDATE SET layout=$2, updated_at=now()
+    `, userID, layoutJSON)
+
 	return err
 }

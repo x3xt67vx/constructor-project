@@ -34,7 +34,7 @@ const TEMPLATES = {
                 id: Date.now() + 4,
                 type: "text",
                 position: { x: 160, y: 100 },
-                size: { width: 200, height: 25 },
+                size: { width: 200, height: 40 },
                 z_index: 1,
                 content: { text: "GitHub: https://github.com/username" },
                 style: { background_color: "#fff", color: "#1a0dab", font_size: "14px", background_image: "" }
@@ -301,7 +301,9 @@ function showControlsFor(type) {
 
 async function loadLayout() {
     try {
-        const res = await fetch("/api/layouts/1");
+        const url = new URL(window.location.href);
+        const id = url.searchParams.get("id");
+        const res = await  fetch(`/api/layouts/get?id=${id}`);
         if (!res.ok) throw new Error("no layout");
         const layout = await res.json();
 
@@ -592,10 +594,12 @@ function makeDraggable(el) {
 
 document.getElementById("save-layout").addEventListener("click", saveLayout);
 
-document.getElementById("save-layout").addEventListener("click", saveLayout);
 
 function saveLayout() {
     const comps = [];
+    const url = new URL(window.location.href);
+    const id = url.searchParams.get("id");
+
     canvas.querySelectorAll(".component").forEach(el => {
         let content = {};
         if (el.dataset.type === "image") {
@@ -637,21 +641,21 @@ function saveLayout() {
     });
 
     const layout = {
-        id: 1,
-        name: "First Layout",
+        id: id,
         components: comps,
         canvas_background: getBackgroundImageUrl(canvas)
     };
 
-    fetch("/api/layouts/1/save", {
+    fetch(`/api/layouts/save?id=${id}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify(layout)
     })
-        .then(res => res.json())
+
+    .then(res => res.json())
         .then(data => {
-            if (data.status === "ok") alert("Макет сохранён!");
-            else alert("Ошибка сохранения");
+            if (data.status === "ok") alert("Ошибка сохранения");
+            else alert("Макет сохранён!");
         })
         .catch(err => alert("Ошибка: " + err));
 }
@@ -726,19 +730,20 @@ btnLayerUp.addEventListener("click", () => shiftLayer(+1));
 btnLayerDown.addEventListener("click", () => shiftLayer(-1));
 
 btnLayerTop.addEventListener("click", () => {
-    if (!selectedComponent()) return;
+    if (!selectedComponent) return;
 
     const maxZ = Math.max(
         ...Array.from(document.querySelectorAll(".component")).map(x => parseInt(x.style.zIndex || 0))
     );
 
-    selectedComponent().style.zIndex = maxZ + 1;
+    selectedComponent.style.zIndex = maxZ + 1;
+
 
     refreshLayersPanel();
 });
 
 btnLayerBottom.addEventListener("click", () => {
-    if (!selectedComponent()) return;
+    if (!selectedComponent) return;
 
     const minZ = Math.min(
         ...Array.from(document.querySelectorAll(".component")).map(x => parseInt(x.style.zIndex || 0))
@@ -809,7 +814,7 @@ function getDragAfterElement(container, y) {
         const offset = y - box.top - box.height / 2;
 
         if (offset < 0 && offset > closest.offset) {
-            return { offset, element: child };
+            return { offset: offset, element: child };
         } else {
             return closest;
         }
