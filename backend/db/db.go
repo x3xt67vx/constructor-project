@@ -71,18 +71,19 @@ func CheckUser(username, password string) (bool, int) {
 	return true, id
 }
 
-func CreateLayout(userID int, name string) (int, error) {
+func CreateLayout(userID int, name, description string) (int, error) {
 	var id int
 	err := DB.QueryRow(
-		"INSERT INTO user_layouts (user_id, name) VALUES ($1, $2) RETURNING id",
-		userID, name,
+		"INSERT INTO user_layouts (user_id, name, description) VALUES ($1, $2, $3) RETURNING id",
+		userID, name, description,
 	).Scan(&id)
+
 	return id, err
 }
 
 func GetLayouts(userID int) ([]map[string]any, error) {
 	rows, err := DB.Query(
-		"SELECT id, name, created_at FROM user_layouts WHERE user_id = $1 ORDER BY created_at DESC",
+		"SELECT id, name, description, created_at FROM user_layouts WHERE user_id = $1 ORDER BY created_at DESC",
 		userID,
 	)
 	if err != nil {
@@ -94,15 +95,15 @@ func GetLayouts(userID int) ([]map[string]any, error) {
 
 	for rows.Next() {
 		var id int
-		var name string
-		var createdAt string
+		var name, description, createdAt string
 
-		rows.Scan(&id, &name, &createdAt)
+		rows.Scan(&id, &name, &description, &createdAt)
 
 		result = append(result, map[string]any{
-			"id":         id,
-			"name":       name,
-			"created_at": createdAt,
+			"id":          id,
+			"name":        name,
+			"description": description,
+			"created_at":  createdAt,
 		})
 	}
 
@@ -137,4 +138,11 @@ func GetUserByID(id int) (*User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+func UpdateDescription(userID, layoutID int, description string) error {
+	_, err := DB.Exec(
+		"UPDATE user_layouts SET description = $1 WHERE id = $2 AND user_id = $3",
+		description, layoutID, userID,
+	)
+	return err
 }

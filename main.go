@@ -44,6 +44,7 @@ func main() {
 	http.HandleFunc("/api/layouts/get", middleware.RequireAuth(handlers.GetLayoutHandler))
 	http.HandleFunc("/api/layouts/save", middleware.RequireAuth(handlers.SaveLayoutHandler))
 	http.HandleFunc("/api/layouts/delete", middleware.RequireAuth(handlers.DeleteLayoutHandler))
+	http.Handle("/api/layouts/update-description", middleware.RequireAuth(handlers.UpdateDescriptionHandler))
 
 	log.Println("Server started at :8080")
 	http.ListenAndServe(":8080", nil)

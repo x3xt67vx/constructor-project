@@ -7,6 +7,14 @@ import (
 	"net/http"
 )
 
+type Layout struct {
+	ID          int    `json:"id"`
+	UserID      int    `json:"user_id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CreatedAt   string `json:"created_at"`
+}
+
 func GetLayoutHandler(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(middleware.UserIDKey).(int)
 

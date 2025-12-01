@@ -13,12 +13,11 @@ func CreateLayoutHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Name        string `json:"name"`
 		Description string `json:"description"`
-		CreatedAt   string `json:"createdAt"`
-		UpdatedAt   string `json:"updatedAt"`
 	}
+
 	json.NewDecoder(r.Body).Decode(&req)
 
-	id, err := db.CreateLayout(userID, req.Name)
+	id, err := db.CreateLayout(userID, req.Name, req.Description)
 	if err != nil {
 		http.Error(w, "failed", 500)
 		return
@@ -29,6 +28,7 @@ func CreateLayoutHandler(w http.ResponseWriter, r *http.Request) {
 		"id":      id,
 	})
 }
+
 func DeleteLayoutHandler(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(middleware.UserIDKey).(int)
 

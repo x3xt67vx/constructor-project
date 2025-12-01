@@ -175,12 +175,6 @@
             font-size:0.95rem;
         }
 
-        .projects{
-            display:grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap:14px;
-            margin-top:6px;
-        }
         .project{
             position: relative;
             background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.008));
@@ -220,41 +214,6 @@
         }
 
 
-        .project-card{
-            background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.008));
-            border-radius:10px;
-            padding:14px;
-            border:1px solid rgba(255,255,255,0.02);
-            transition:transform var(--transition), box-shadow var(--transition);
-            min-height:96px;
-            display:flex;
-            flex-direction:column;
-            justify-content:space-between;
-        }
-
-        .project-card:hover{
-            transform:translateY(-8px);
-            box-shadow:0 22px 48px rgba(2,6,23,0.6);
-        }
-
-        .project-title{
-            font-weight:700;
-            margin:0 0 6px 0;
-            font-size:1rem;
-        }
-
-        .project-sub{
-            color:var(--muted);
-            font-size:0.92rem;
-            margin:0;
-        }
-
-        .project-actions{
-            display:flex;
-            gap:8px;
-            justify-content:flex-end;
-            margin-top:8px;
-        }
 
         .project .open-btn{
             background:transparent;
@@ -271,29 +230,20 @@
 
         .project .open-btn:hover{transform:translateY(-2px)}
 
-        .empty{
-            border:1px dashed rgba(255,255,255,0.03);
-            border-radius:10px;
-            padding:28px;
-            text-align:center;
-            color:var(--muted);
-            background:linear-gradient(180deg, rgba(255,255,255,0.005), transparent);
+
+
+
+
+        .projects {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            width: 100%;
         }
 
-        #list {
-            display: contents;
-        }
 
-        .project{
-            background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.008));
-            border-radius:10px;
-            padding:14px;
-            border:1px solid rgba(255,255,255,0.02);
-            margin-bottom:12px;
-            display:flex;
-            flex-direction:column;
-            gap:8px;
-        }
+
+
         .project b{display:block;font-weight:700;margin-bottom:4px}
         .project small{color:var(--muted)}
         .project button{
@@ -305,6 +255,39 @@
             cursor:pointer;
             font-weight:600;
         }
+        .project .description {
+            color: var(--muted);
+            font-size: 0.92rem;
+            line-height: 1.35;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: rgba(255,255,255,0.02);
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.03);
+            min-height: 60px;
+        }
+        .description-wrapper {
+            overflow: hidden;
+            max-height: 80px; /* высота в свернутом виде */
+            transition: max-height 0.25s ease;
+            position: relative;
+        }
+        .description-wrapper.expanded {
+            max-height: 500px; /* раскрыто */
+        }
+        .toggle-desc-btn {
+            margin-top: 6px;
+            font-size: 0.8rem;
+            color: var(--accent-2);
+            cursor: pointer;
+            user-select: none;
+            width: fit-content;
+            opacity: 0.85;
+        }
+        .toggle-desc-btn:hover {
+            opacity: 1;
+        }
 
         @media (max-width:900px){
             body{padding:12px}
@@ -313,6 +296,18 @@
             .content{order:1; min-height:auto}
             .projects{grid-template-columns: repeat(auto-fill, minmax(180px, 1fr))}
         }
+        @media (max-width: 1100px) {
+            .projects {
+                grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            }
+        }
+
+        @media (max-width: 700px) {
+            .projects {
+                grid-template-columns: repeat(1, 1fr);
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -343,20 +338,16 @@
             </div>
         </div>
 
-        <section class="projects" aria-live="polite" id="projects-section">
-            <div id="list" style="width:100%; display:block"></div>
-
-        </section>
+        <div class="projects" id="list"></div>
     </main>
 </div>
 
 <script>
+
     fetch("/api/me")
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById("username").innerText =
-                 data.username;
-        });
+        .then(r => r.json())
+        .then(u => document.getElementById("username").innerText = u.username);
+
 
     async function loadLayouts() {
         const res = await fetch("/api/layouts/list");
@@ -365,44 +356,84 @@
         let html = "";
         for (let layout of data) {
             html += `
-            <div class="project">
-                <button class="delete-btn" onclick="deleteLayout(${layout.id})">×</button>
+                <div class="project">
+                    <button class="delete-btn" onclick="deleteLayout(${layout.id})">×</button>
 
-                <b>${layout.name}</b>
-                <small>${layout.created_at}</small>
+                    <b>${layout.name}</b>
+                    <small>${layout.created_at}</small>
 
-                <br>
+                    <a href="/constructor?id=${layout.id}">
+                        <button>Открыть</button>
+                    </a>
 
-                <a href="/constructor?id=${layout.id}">
-                    <button>Открыть</button>
-                </a>
-            </div>
-        `;
+                    <div class="description-wrapper" id="wrap-${layout.id}">
+                        <div class="description"
+                            onclick="editDescription(${layout.id}, this)">
+                            ${layout.description ? layout.description : "Нет описания"}
+                        </div>
+                    </div>
+            <div class="toggle-desc-btn"
+        onclick="toggleDescription(${layout.id})">
+        Показать полностью ▼
+        </div>
+</div>
+            `;
         }
+
         document.getElementById("list").innerHTML = html;
     }
 
 
+
+    function editDescription(id, element) {
+        let oldText = element.innerText === "Нет описания" ? "" : element.innerText;
+
+        const textarea = document.createElement("textarea");
+        textarea.className = "desc-edit";
+        textarea.value = oldText;
+
+        const wrapper = element.parentElement;
+        wrapper.replaceChild(textarea, element);
+
+        textarea.focus();
+
+        textarea.addEventListener("blur", async () => {
+            const newText = textarea.value.trim();
+
+            await fetch("/api/layouts/update-description", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({id, description: newText})
+            });
+
+            const div = document.createElement("div");
+            div.className = "description";
+            div.innerText = newText || "Нет описания";
+            div.onclick = () => editDescription(id, div);
+
+            wrapper.replaceChild(div, textarea);
+        });
+    }
+
+
+
     async function createLayout() {
         const name = prompt("Название макета:");
-        const description = prompt("Описание проекта")
         if (!name) return;
+
+        const description = prompt("Описание (необязательно):") || "";
 
         const res = await fetch("/api/layouts/create", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({name , description})
-
-
+            body: JSON.stringify({name, description})
         });
 
-
         const data = await res.json();
-
-        if (data.success) {
-            window.location.href = "/constructor?id=" + data.id;
-        }
+        if (data.success) loadLayouts();
     }
+
+
     async function deleteLayout(id) {
         if (!confirm("Удалить макет?")) return;
 
@@ -413,12 +444,19 @@
         });
 
         const data = await res.json();
+        if (data.success) loadLayouts();
+    }
+    function toggleDescription(id) {
+        const wrapper = document.getElementById(`wrap-${id}`);
+        const btn = wrapper.nextElementSibling;
 
-        if (data.success) {
-            loadLayouts();
-        } else {
-            alert("Ошибка удаления");
-        }
+        wrapper.classList.toggle("expanded");
+
+        const expanded = wrapper.classList.contains("expanded");
+
+        btn.innerText = expanded
+            ? "Скрыть ▲"
+            : "Показать полностью ▼";
     }
 
 
