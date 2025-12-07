@@ -227,23 +227,12 @@
             align-items:center;
             gap:8px;
         }
-
-        .project .open-btn:hover{transform:translateY(-2px)}
-
-
-
-
-
         .projects {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 20px;
             width: 100%;
         }
-
-
-
-
         .project b{display:block;font-weight:700;margin-bottom:4px}
         .project small{color:var(--muted)}
         .project button{
@@ -288,6 +277,72 @@
         .toggle-desc-btn:hover {
             opacity: 1;
         }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(6px);
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .modal-box {
+            width: 420px;
+            max-width: calc(100% - 32px);
+            background: var(--panel);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 14px;
+            padding: 20px 20px 18px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            position: relative;
+        }
+
+        .modal-box h3 {
+            margin: 0 0 6px;
+            font-size: 1.2rem;
+        }
+
+        .modal-label {
+            font-size: 0.9rem;
+            color: var(--muted);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .modal-box input,
+        .modal-box textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            color: var(--text);
+            outline: none;
+            font-size: 0.95rem;
+        }
+
+        .modal-box textarea {
+            resize: none;
+            height: 120px;
+        }
+
+        .modal .close {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            background: rgba(255,255,255,0.06);
+            border: 0;
+            color: white;
+            border-radius: 8px;
+            padding: 4px 8px;
+            cursor: pointer;
+        }
 
         @media (max-width:900px){
             body{padding:12px}
@@ -322,7 +377,7 @@
         </div>
 
         <div class="actions" role="navigation" aria-label="Действия">
-            <button class="btn btn-primary" onclick="createLayout()" type="button">Создать макет</button>
+            <button class="btn btn-primary" onclick="openCreateModal()" type="button">Создать макет</button>
             <a href="/logout" class="btn btn-danger" role="button">Выйти</a>
         </div>
     </aside>
@@ -341,7 +396,25 @@
         <div class="projects" id="list"></div>
     </main>
 </div>
+<!-- Модальное окно создания макета -->
+<div id="create-modal" class="modal">
+    <div class="modal-box">
+        <button class="close" onclick="closeCreateModal()">✕</button>
+        <h3>Создать новый макет</h3>
 
+        <label class="modal-label">
+            Название
+            <input type="text" id="new-layout-name" placeholder="Введите название">
+        </label>
+
+        <label class="modal-label">
+            Описание
+            <textarea id="new-layout-desc" placeholder="Введите описание"></textarea>
+        </label>
+
+        <button class="btn btn-primary" onclick="submitCreateLayout()">Создать</button>
+    </div>
+</div>
 <script>
 
     fetch("/api/me")
@@ -381,6 +454,13 @@
         }
 
         document.getElementById("list").innerHTML = html;
+    }
+    function openCreateModal() {
+        document.getElementById("create-modal").style.display = "flex";
+    }
+
+    function closeCreateModal() {
+        document.getElementById("create-modal").style.display = "none";
     }
 
 
@@ -458,8 +538,6 @@
             ? "Скрыть ▲"
             : "Показать полностью ▼";
     }
-
-
     loadLayouts();
 </script>
 </body>

@@ -22,12 +22,14 @@
         <button id="choose-template-btn" class="btn">Выбрать шаблон</button>
         <button class="template-btn btn" data-type="text">Добавить текст</button>
         <button class="template-btn btn" data-type="image">Добавить изображение</button>
+        <button id="delete-block" class="btn danger">Удалить выбранный блок</button>
     </div>
 
     <div class="top-right">
         <label class="inline-label">Фон полотна:
             <input id="canvas-bg-url" type="text" placeholder="URL фона" />
         </label>
+        <button id="toggle-canvas-theme" class="btn">Светлое/тёмное полотно</button>
         <button id="clear-canvas-bg" class="btn">Очистить фон</button>
         <button id="save-layout" class="btn primary">Сохранить макет</button>
     </div>
@@ -77,6 +79,8 @@
 
         <button id="clear-bg-image" class="btn">Удалить фон блока</button>
 
+
+
         <hr>
         <h3>Слои</h3>
 
@@ -91,12 +95,18 @@
             </div>
         </div>
 
-
-        <button id="delete-block" class="btn danger">Удалить выбранный блок</button>
     </aside>
 
     <section id="canvas-wrap">
-        <div id="canvas"></div>
+        <div id="canvas"
+             style="
+                flex:1;
+                display: flex;
+                overflow: auto;
+                border:2px dashed #cbd5e0;
+                position:relative;
+                min-height: calc(100vh - 56px - 32px);">
+        </div>
     </section>
 </div>
 
@@ -115,7 +125,14 @@
         </div>
     </div>
 </div>
+<label>X:<input id="edit-x" type="number"></label>
+<label>Y:<input id="edit-y" type="number"></label>
+<button id="align-left">←</button>
+<button id="align-center">↔</button>
+<button id="align-top">↑</button>
+
 
 <script src="/static/js/app.js"></script>
+
 </body>
 </html>
