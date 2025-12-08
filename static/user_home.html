@@ -442,7 +442,8 @@
                     <div class="description-wrapper" id="wrap-${layout.id}">
                         <div class="description"
                             onclick="editDescription(${layout.id}, this)">
-                            ${layout.description ? layout.description : "Нет описания"}
+                            ${layout.description ? escapeHTML(layout.description) : "Нет описания"}
+
                         </div>
                     </div>
             <div class="toggle-desc-btn"
@@ -512,6 +513,33 @@
         const data = await res.json();
         if (data.success) loadLayouts();
     }
+    async function submitCreateLayout() {
+        const name = document.getElementById("new-layout-name").value.trim();
+        const description = document.getElementById("new-layout-desc").value.trim();
+
+        if (!name) {
+            alert("Введите название макета");
+            return;
+        }
+
+        const res = await fetch("/api/layouts/create", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ name, description })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            closeCreateModal();
+            document.getElementById("new-layout-name").value = "";
+            document.getElementById("new-layout-desc").value = "";
+            loadLayouts();
+        } else {
+            alert("Ошибка создания макета");
+        }
+    }
+
 
 
     async function deleteLayout(id) {
@@ -526,6 +554,15 @@
         const data = await res.json();
         if (data.success) loadLayouts();
     }
+    function escapeHTML(text) {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     function toggleDescription(id) {
         const wrapper = document.getElementById(`wrap-${id}`);
         const btn = wrapper.nextElementSibling;

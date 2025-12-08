@@ -268,6 +268,42 @@ a { color: var(--accent); }
 #canvas.light {
     background: #ffffff;
 }
+.project .description-wrapper {
+    width: 100%;
+}
+
+.project .description {
+    width: 100%;
+    display: block;
+    box-sizing: border-box;
+}
+
+.desc-edit {
+    width: 100% !important;
+    min-height: 60px;
+    max-height: 300px;
+    resize: vertical;
+    box-sizing: border-box;
+    display: block;
+
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+
+    padding: 12px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: #e6eef8;
+    outline: none;
+
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.desc-edit:focus {
+    border-color: #4A67FF;
+    box-shadow: 0 0 0 2px rgba(74,103,255,0.15);
+}
+
 
 
 
